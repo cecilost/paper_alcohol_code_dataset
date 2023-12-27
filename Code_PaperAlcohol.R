@@ -1,6 +1,6 @@
 
 # R Codes for:
-# López Steinmetz LC, Leyes CA, Fong SB & Godoy JC."Alcohol consumption, 
+# LÃ³pez Steinmetz LC, Leyes CA, Fong SB & Godoy JC."Alcohol consumption, 
 # alcohol expectancies, and drinking contexts in young Argentinean college students 
 # before and during the COVID-19 pandemic: A one-year follow-up study"
 
