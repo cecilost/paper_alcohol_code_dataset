@@ -14,5 +14,5 @@ doi:
 https://doi.org/10.17605/OSF.IO/FMHUJ
 
 This dataset and code were used in the following published paper: 
-López Steinmetz L. C., Leyes C. A., Fong, S. B. & Godoy J. C. (2023). Alcohol consumption, alcohol expectancies, and drinking contexts in young Argentinean college students before and during the COVID 19 pandemic: A one year follow up study. The American Journal of Drug and Alcohol Abuse (AJDAA) AJDAA), 49 (4), 500 510. https://doi.org/10.1080/00952990.2023.2192376
+López Steinmetz L. C., Leyes C. A., Fong, S. B. & Godoy J. C. (2023). Alcohol consumption, alcohol expectancies, and drinking contexts in young Argentinean college students before and during the COVID 19 pandemic: A one year follow up study. The American Journal of Drug and Alcohol Abuse (AJDAA), 49 (4), 500 510. https://doi.org/10.1080/00952990.2023.2192376
 
