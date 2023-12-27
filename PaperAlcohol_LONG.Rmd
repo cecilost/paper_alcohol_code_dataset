@@ -1,0 +1,1198 @@
+---
+title: "PaperAlcohol_LongitudinalSample.R"
+author: "L. Cecilia López Steinmetz"
+date: "17/2/2023"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+# R Code for:
+
+
+# López Steinmetz LC, Leyes CA, Fong SB & Godoy JC. "Alcohol consumption, alcohol expectancies, and drinking contexts in young Argentinean college students before and during the COVID-19 pandemic: A one-year follow-up study"
+
+
+### ABBREVIATIONS 
+
+
+**Abbreviations:**
+EA = Alcohol Expectancy (Expectativas hacia el alcohol)
+CC = Consumption Contexts (Contextos de consumo de alcohol)
+
+
+### LOAD THE DATASET: a) Longitudinal
+
+
+#### a) Load the dataset: *LONGITUDINAL sample*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+dataset<-read.table("clipboard",header=TRUE, encoding = "Latin 1", dec=",", sep="\t") # LONGITUDINAL
+```
+
+
+#### To explore the data
+
+#### a) *LONGITUDINAL sample*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(dplyr)
+glimpse(dataset)  # here we can also check the type of the variables
+summary(dataset)
+```
+
+
+*Check the type of the variables (LONGITUDINAL) and transform them (when necessary)*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+str(dataset)
+
+dataset$sexo<-as.factor(dataset$sexo)
+dataset$aunidalcsem<-as.numeric(dataset$aunidalcsem)
+dataset$aALCSEM<-as.numeric(dataset$aALCSEM)
+dataset$bunidalcsem<-as.numeric(dataset$bunidalcsem)
+dataset$bALCSEM<-as.numeric(dataset$bALCSEM)
+```
+
+
+*To order categories*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+dataset$sexo <- factor(dataset$sexo, levels=c("mujer", "varon")) # to order categories
+
+str(dataset)
+```
+
+
+### METHODS SECTION 
+
+
+#### SKEWNESS, KURTOSIS, & MULTICOLLINEARITY
+
+
+*To test Skewness and Kurtosis: See codes for supplementary files (at the end of these scripts)*
+
+
+*To test for multicollinearity: See codes supplementary files (at the end of these scripts)*
+
+
+#### DESCRIPTION OF THE SAMPLE
+
+
+##### LONGITUDINAL 
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# Sex
+table(dataset$sexo)
+
+prop.table(table(dataset$sexo))*100
+
+
+# Age
+mean(dataset$aedad) # at the first measurement
+
+sd(dataset$aedad) # at the first measurement
+
+
+# Age of onset of alcohol consumption
+mean(dataset$aedadinicioalc)
+
+sd(dataset$aedadinicioalc)
+
+
+# Weekly alcohol consumption (Units of alcohol): First measurement:
+mean(dataset$aALCSEM)
+
+sd(dataset$aALCSEM)
+
+
+# Weekly alcohol consumption (Units of alcohol): Second measurement:
+mean(dataset$bALCSEM, na.rm = TRUE)
+
+sd(dataset$bALCSEM, na.rm = TRUE)
+
+```
+
+
+
+##### LOG TRANSFORMATIONS
+
+*LONGITUDINAL SAMPLE*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+newdata <- dataset 
+```
+
+
+*Log transformatios*
+
+
+*Time 1 (T1)*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES
+newdata$logaALCSEM <- log(newdata$aALCSEM + 1) 
+
+# ALCOHOL EXPECTANCIES
+
+### POSITIVE EA. Time 1:
+newdata$logaEAPOS <- log(newdata$aEAPOS + 1)
+
+# NEGATIVE EA. Time 1:
+newdata$logaEANEG <- log(newdata$aEANEG + 1)
+
+# CONSUMPTION CONTEXTS
+
+# SOCIAL FACILITATION. Time 1:
+newdata$logafacilitsoc <- log(newdata$afacilitsoc + 1)
+
+# PEER GROUP ACCEPTANCE. Time 1:
+newdata$logaaceptpares <- log(newdata$aaceptpares + 1)
+
+# PARENTAL CONTROL. Time 1:
+newdata$logactrolparent <- log(newdata$actrolparent + 1)
+
+# STRESS CONTROL. Time 1:
+newdata$logactrolestres <- log(newdata$actrolestres + 1)
+```
+
+
+*Time 2 (T2)*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES
+newdata$logbALCSEM <- log(newdata$bALCSEM + 1)
+
+# ALCOHOL EXPECTANCIES
+
+# POSITIVE EA. Time 2:
+newdata$logbEAPOS <- log(newdata$bEAPOS + 1)
+
+# NEGATIVE EA. Time 2:
+newdata$logbEANEG <- log(newdata$bEANEG + 1)
+
+# CONSUMPTION CONTEXTS
+
+# SOCIAL FACILITATION. Time 2:
+newdata$logbfacilitsoc <- log(newdata$bfacilitsoc + 1)
+
+# PEER GROUP ACCEPTANCE. Time 2:
+newdata$logbaceptpares <- log(newdata$baceptpares + 1)
+
+# PARENTAL CONTROL. Time 2:
+newdata$logbctrolparent <- log(newdata$bctrolparent + 1)
+
+# STRESS CONTROL. Time 2:
+newdata$logbctrolestres <- log(newdata$bctrolestres + 1)
+```
+
+
+### *LONGITUDINAL SAMPLE*
+
+
+### *BASED ON MEASURES OF EA AND cc AT THE 1ST MEASUREMENT*
+
+
+Preparing the data: based on the LOG TRANSFORMED VALUES
+
+*To select the variables from the "newdata" dataset: FOR EA AND CC HERE WE USE THE SCORES AS MEASURED AT TIME 1*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(dplyr)
+datasetlongt1<-select(newdata, code, sexo, aedad, aedadinicioalc, logaEAPOS, logaEANEG, logafacilitsoc, logaaceptpares, logactrolparent, logactrolestres, logaALCSEM, logbALCSEM)
+```
+
+
+*To convert the format of the dataframe into the long format*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(reshape)
+longt1<-melt(datasetlongt1, id = c("code","sexo", "aedad", "aedadinicioalc", "logaEAPOS", "logaEANEG", "logafacilitsoc", "logaaceptpares", "logactrolparent", "logactrolestres"), measured = c("logaALCSEM","logbALCSEM"))
+```
+
+
+*To rename variables*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+names(longt1)<-c("participant","sexo", "aedad", "aedadinicioalc", "logaEAPOS", "logaEANEG", "logafacilitsoc", "logaaceptpares", "logactrolparent", "logactrolestres", "variable", "scores") # "variable" refers to the repeated-measures variable
+```
+
+
+*This creates a variable "period" in the dataframe longt1*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+longt1$period<-gl(2, 300, labels = c("first", "second")) # We created 2 sets of 300 scores, the labels option then specifies the names to attach to these 2 sets, which correspond to the levels of "period" (first measurement and follow-up).
+```
+
+
+*To make it clearer that there are two observations for each participant we have sorted the data by participant*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+longt1<-longt1[order(longt1$participant),]
+
+longt1[1:6, ]
+
+library(mice)
+
+set.seed(123)
+
+iniLONGT1 <- mice(longt1, maxit = 0)
+
+predLONGT1 <- iniLONGT1$pred
+predLONGT1
+```
+
+
+*Setting values of variables I'd like to leave out to 0 in the predictor matrix*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+predLONGT1[, c("variable", "period")] <- 0
+predLONGT1
+
+predLONGT1["scores", ] <- c(-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) # The class variable (only one is allowed) is coded by a `-2'.
+
+impLONGT1 <- mice(longt1, meth = c("", "", "", "", "", "", "", "", "", "", "", "2l.norm", ""), m = 10, pred = predLONGT1, maxit = 5, seed = 123) # The dependent variable is "scores" (alcohol consumption)
+
+print(impLONGT1) 
+impLONGT1$imp$scores # to see the imputed values
+```
+
+
+*Distribution of observed/imputed values*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+xyplot(impLONGT1, scores ~ logaEAPOS | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT1, scores ~ logaEANEG | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT1, scores ~ logafacilitsoc | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT1, scores ~ logaaceptpares | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT1, scores ~ logactrolparent | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT1, scores ~ logactrolestres | .imp, pch = 20, cex=1.4)
+```
+
+
+*Complete the dataset*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+myDatalongt1 <- complete(impLONGT1, 10) # WE IMPUTED THE 10TH DATASET
+```
+
+
+*To select the order in which the predictors will be included into the model*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(leaps)
+
+bestLONGT1<-regsubsets(scores ~ period + sexo + aedad + aedadinicioalc + logaEAPOS + logaEANEG + logafacilitsoc + logaaceptpares + logactrolparent + logactrolestres, data = myDatalongt1, nvmax = 11, method = "exhaustive")
+
+summary(bestLONGT1, all.best = TRUE)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+plot(bestLONGT1, scale = "r2", main = "Best R^2") # R2 = 0.16
+plot(bestLONGT1, scale = "adjr2", main = "Best Adjusted R^2") # Adj R2 = 0.15 
+```
+
+
+*MULTILEVEL ANALYSYS (MIXED EFFECTS)*
+
+
+*Building the model*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(nlme)
+
+interceptOnlyT1 <-gls(scores ~ 1, data = myDatalongt1, method = "ML") # only the intercept
+
+model1<-lme(scores ~ 1, random = ~1|participant, data = myDatalongt1, method = "ML", control = lmeControl(opt = "optim")) # the nested structure indicates repeated measures (within variable) # repeated measures nested within participants
+anova(interceptOnlyT1, model1)  # to compare models
+```
+
+
+*To see the overall effect of each main effect we added them to the model one at a time*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1facsoc<-update(model1, .~. + logafacilitsoc)
+summary(t1facsoc)  
+anova(interceptOnlyT1, model1, t1facsoc) 
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1ctrlstress<-update(t1facsoc, .~. + logactrolestres)
+summary(t1ctrlstress)  
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress) 
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1ctrlparental<-update(t1ctrlstress, .~. + logactrolparent)
+summary(t1ctrlparental)  
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1edadinicio<-update(t1ctrlparental, .~. + aedadinicioalc)
+summary(t1edadinicio) 
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental, t1edadinicio)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1aceptpares<-update(t1edadinicio, .~. + logaaceptpares)
+summary(t1aceptpares) 
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental, t1edadinicio, t1aceptpares)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1sexo<-update(t1aceptpares, .~. + sexo)
+summary(t1sexo) 
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental, t1edadinicio, t1aceptpares, t1sexo)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1edad<-update(t1sexo, .~. + aedad)
+summary(t1edad)  
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental, t1edadinicio, t1aceptpares, t1sexo, t1edad)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1period<-update(t1edad, .~. + period)
+summary(t1period)  
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental, t1edadinicio, t1aceptpares, t1sexo, t1edad, t1period)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1eapos<-update(t1period, .~. + logaEAPOS)
+summary(t1eapos)  
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental, t1edadinicio, t1aceptpares, t1sexo, t1edad, t1period, t1eapos)  
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t1eaneg<-update(t1eapos, .~. + logaEANEG)
+summary(t1eaneg) 
+anova(interceptOnlyT1, model1, t1facsoc, t1ctrlstress, t1ctrlparental, t1edadinicio, t1aceptpares, t1sexo, t1edad, t1period, t1eapos, t1eaneg)
+```
+
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+summary(t1aceptpares)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+intervals(t1aceptpares)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(pastecs)
+by(myDatalongt1$scores, list(myDatalongt1$period), stat.desc, basic = FALSE)
+by(myDatalongt1$scores, list(myDatalongt1$period, myDatalongt1$sexo), stat.desc, basic = FALSE)
+```
+
+
+*Calculating effect sizes*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(DSUR.noof)
+```
+
+
+We got effect sizes of meaningful predictors by executing: rcontrast(t,df)
+
+
+rcontrast(t-value, DF) # this data is in: summary(t1aceptpares)
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# logafacilitsoc  
+rcontrast(3.773315, 294)
+
+
+# logactrolestres   
+rcontrast(2.908588, 294)
+
+
+# logactrolparent    
+rcontrast(2.024686, 294)
+
+
+# aedadinicioalc     
+rcontrast(-2.092601, 294)
+
+
+# logaaceptpares
+rcontrast(-2.208698, 294)
+```
+
+
+### *LONGITUDINAL SAMPLE*
+
+
+### *BASED ON MEASURES OF EA AND cc AT THE 2ND MEASUREMENT (or FOLLOW-UP)*
+
+
+We have run the same analysis, but now considering the EA and CC scores as measured at time 2 (follow-up).
+
+
+*Preparing the data: based on LOG TRANSFORMED VALUES*
+
+
+*To select the variables from the "newdata" dataset: FOR EA AND CC HERE WE USE THE SCORES AS MEASURED AT TIME 2*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# library(dplyr)
+datasetlongt2<-select(newdata, code, sexo, aedad, aedadinicioalc, logbEAPOS, logbEANEG, logbfacilitsoc, logbaceptpares, logbctrolparent, logbctrolestres, logaALCSEM, logbALCSEM)
+```
+
+
+*To convert the format of the dataframe into the long format*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# library(reshape)
+longt2<-melt(datasetlongt2, id = c("code","sexo", "aedad", "aedadinicioalc", "logbEAPOS", "logbEANEG", "logbfacilitsoc", "logbaceptpares", "logbctrolparent", "logbctrolestres"), measured = c("logaALCSEM","logbALCSEM"))
+```
+
+
+*To rename variables*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+names(longt2)<-c("participant","sexo", "aedad", "aedadinicioalc", "logbEAPOS", "logbEANEG", "logbfacilitsoc", "logbaceptpares", "logbctrolparent", "logbctrolestres", "variable", "scores") # "variable" refers to the repeated-measures variable
+```
+
+
+*This creates a variable "period" in the dataframe longt2*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+longt2$period<-gl(2, 300, labels = c("first", "second")) # We created 2 sets of 300 scores, the labels option then specifies the names to attach to these 2 sets, which correspond to the levels of "period" (first measurement and follow-up).
+```
+
+
+*To make it clearer that there are two observations for each participant we have sorted the data by participant*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+longt2<-longt2[order(longt2$participant),]
+
+longt2[1:6, ]
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# library(mice)
+library(VIM)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# Missing data
+p <- function(x) {sum(is.na(x))/length(x)*100}
+apply(longt2, 2, p) 
+
+
+library(mice)
+
+set.seed(123)
+
+iniLONGT2 <- mice(longt2, maxit = 0)
+
+predLONGT2 <- iniLONGT2$pred
+predLONGT2
+```
+
+
+*Setting values of variables I'd like to leave out to 0 in the predictor matrix*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+predLONGT2[, c("variable", "period")] <- 0
+predLONGT2
+
+predLONGT2["scores", ] <- c(-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) # The class variable (only one is allowed) is coded by a `-2'.
+
+impLONGT2 <- mice(longt2, meth = c("", "", "", "", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "", "2l.norm", ""), m = 10, pred = predLONGT2, maxit = 5, seed = 123) # The dependent variable is "scores" (alcohol consumption)
+
+print(impLONGT2) 
+impLONGT2$imp$scores # to see the imputed values
+```
+
+
+*Distribution of oberserved/imputed values*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+xyplot(impLONGT2, scores ~ logbEAPOS | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT2, scores ~ logbEANEG | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT2, scores ~ logbfacilitsoc | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT2, scores ~ logbaceptpares | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT2, scores ~ logbctrolparent | .imp, pch = 20, cex=1.4)
+xyplot(impLONGT2, scores ~ logbctrolestres | .imp, pch = 20, cex=1.4)
+```
+
+
+*Complete the dataset*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+myDatalongt2 <- complete(impLONGT2, 10) # WE IMPUTED THE 10TH DATASET
+```
+
+
+*To select the order in which the predictors will be included into the model*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# library(leaps)
+
+bestLONGT2<-regsubsets(scores ~ period + sexo + aedad + aedadinicioalc + logbEAPOS + logbEANEG + logbfacilitsoc + logbaceptpares + logbctrolparent + logbctrolestres, data = myDatalongt2, nvmax = 11, method = "exhaustive")
+
+summary(bestLONGT2, all.best = TRUE)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+plot(bestLONGT2, scale = "r2", main = "Best R^2") # R2 = 0.14 
+plot(bestLONGT2, scale = "adjr2", main = "Best Adjusted R^2") # Adj R2 = 0.13 
+```
+
+
+*MULTILEVEL ANALYSYS (MIXED EFFECTS)*
+
+
+*Building the model*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# library(nlme)
+
+interceptOnlyT2 <-gls(scores ~ 1, data = myDatalongt2, method = "ML") # only the intercept
+
+modelfu2<-lme(scores ~ 1, random = ~1|participant, data = myDatalongt2, method = "ML", control = lmeControl(opt = "optim")) # the nested structure indicates repeated measures (within variable) # repeated measures nested within participants
+anova(interceptOnlyT2, modelfu2)  # to compare models
+```
+
+
+*To see the overall effect of each main effect we added them to the model one at a time*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2facsoc<-update(modelfu2, .~. + logbfacilitsoc)
+summary(t2facsoc)  
+anova(interceptOnlyT2, modelfu2, t2facsoc) 
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2ctrlparental<-update(t2facsoc, .~. + logbctrolparent)
+summary(t2ctrlparental)  
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental)  
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2ctrlstress<-update(t2ctrlparental, .~. + logbctrolestres)
+summary(t2ctrlstress)  
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress) 
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2sexo<-update(t2ctrlstress, .~. + sexo)
+summary(t2sexo) 
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress, t2sexo)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2aceptpares<-update(t2sexo, .~. + logbaceptpares)
+summary(t2aceptpares) 
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress, t2sexo, t2aceptpares)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2eaneg<-update(t2aceptpares, .~. + logbEANEG)
+summary(t2eaneg) 
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress, t2sexo, t2aceptpares, t2eaneg)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2period<-update(t2eaneg, .~. + period)
+summary(t2period)  
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress, t2sexo, t2aceptpares, t2eaneg, t2period) 
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2edadinicio<-update(t2period, .~. + aedadinicioalc)
+summary(t2edadinicio) 
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress, t2sexo, t2aceptpares, t2eaneg, t2period, t2edadinicio)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2edad<-update(t2edadinicio, .~. + aedad)
+summary(t2edad) 
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress, t2sexo, t2aceptpares, t2eaneg, t2period, t2edadinicio, t2edad)
+```
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t2eapos<-update(t2edad, .~. + logbEAPOS)
+summary(t2eapos)  
+anova(interceptOnlyT2, modelfu2, t2facsoc, t2ctrlparental, t2ctrlstress, t2sexo, t2aceptpares, t2eaneg, t2period, t2edadinicio, t2edad, t2eapos)  
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+summary(t2ctrlparental)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+intervals(t2ctrlparental)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# library(pastecs)
+by(myDatalongt2$scores, list(myDatalongt2$period), stat.desc, basic = FALSE)
+by(myDatalongt2$scores, list(myDatalongt2$period, myDatalongt2$sexo), stat.desc, basic = FALSE)
+```
+
+
+*Calculating effect sizes*
+
+We got effect sizes of meaningful predictors by executing: rcontrast(t,df)
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# library(DSUR.noof)
+
+# logbfacilitsoc   
+rcontrast(3.910679, 298)
+
+
+# logbctrolparent
+rcontrast(3.748983, 298)
+```
+
+
+
+
+
+### SUPPLEMENTARY MATERIALS
+
+
+#### To test Skewness and Kurtosis
+
+#### & log transformation
+
+
+*Testing Skewness and Kurtosis*
+
+
+*Criteria:* range of acceptable values -1 to +1 for Skewness and -3 to +3 for Kurtosis (Brown, 2006) or near to.
+
+
+*Reference:* Brown, T. A. (2006). Confirmatory factor analysis for applied research. New York: Guilford Press.
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(moments)
+```
+
+
+We have tested skewness and kurtosis in the original data (from which included NAs).
+Then, we have tested skewness and kurtosis transforming the data by using the log transformation (natural logarithm).
+
+
+#### *LONGITUDINAL SAMPLE*
+
+
+*Time 1 (T1)*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES
+skewness(newdata$aALCSEM)
+
+kurtosis(newdata$aALCSEM)
+
+hist(newdata$aALCSEM)
+
+skewness(newdata$logaALCSEM)
+
+kurtosis(newdata$logaALCSEM)
+
+hist(newdata$logaALCSEM)
+
+# ALCOHOL EXPECTANCIES
+
+# POSITIVE EA. Time 1:
+skewness(newdata$aEAPOS)
+
+kurtosis(newdata$aEAPOS)
+
+hist(newdata$aEAPOS)
+
+skewness(newdata$logaEAPOS)
+
+kurtosis(newdata$logaEAPOS)
+
+hist(newdata$logaEAPOS)
+
+# NEGATIVE EA. Time 1:
+skewness(newdata$aEANEG)
+
+kurtosis(newdata$aEANEG)
+
+hist(newdata$aEANEG)
+
+skewness(newdata$logaEANEG)
+
+kurtosis(newdata$logaEANEG)
+
+hist(newdata$logaEANEG)
+
+# CONSUMPTION CONTEXTS
+
+# SOCIAL FACILITATION. Time 1:
+skewness(newdata$afacilitsoc)
+
+kurtosis(newdata$afacilitsoc)
+
+hist(newdata$afacilitsoc)
+
+skewness(newdata$logafacilitsoc)
+
+kurtosis(newdata$logafacilitsoc)
+
+hist(newdata$logafacilitsoc)
+
+# PEER GROUP ACCEPTANCE. Time 1:
+skewness(newdata$aaceptpares)
+
+kurtosis(newdata$aaceptpares)
+
+hist(newdata$aaceptpares)
+
+skewness(newdata$logaaceptpares)
+
+kurtosis(newdata$logaaceptpares)
+
+hist(newdata$logaaceptpares)
+
+# PARENTAL CONTROL. Time 1:
+skewness(newdata$actrolparent)
+
+kurtosis(newdata$actrolparent)
+
+hist(newdata$actrolparent)
+
+skewness(newdata$logactrolparent)
+
+kurtosis(newdata$logactrolparent)
+
+hist(newdata$logactrolparent)
+
+# STRESS CONTROL. Time 1:
+skewness(newdata$actrolestres)
+
+kurtosis(newdata$actrolestres)
+
+hist(newdata$actrolestres)
+
+skewness(newdata$logactrolestres)
+
+kurtosis(newdata$logactrolestres)
+
+hist(newdata$logactrolestres)
+```
+
+
+
+*Time 2 (T2)*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES
+skewness(newdata$bALCSEM, na.rm = TRUE)
+
+kurtosis(newdata$bALCSEM, na.rm = TRUE)
+
+hist(newdata$bALCSEM)
+
+skewness(newdata$logbALCSEM, na.rm = TRUE)
+
+kurtosis(newdata$logbALCSEM, na.rm = TRUE)
+
+hist(newdata$logbALCSEM)
+
+# ALCOHOL EXPECTANCIES
+
+# POSITIVE EA. Time 2:
+skewness(newdata$bEAPOS, na.rm = TRUE)
+
+kurtosis(newdata$bEAPOS, na.rm = TRUE)
+
+hist(newdata$bEAPOS)
+
+skewness(newdata$logbEAPOS, na.rm = TRUE)
+
+kurtosis(newdata$logbEAPOS, na.rm = TRUE)
+
+hist(newdata$logbEAPOS)
+
+# NEGATIVE EA. Time 2:
+skewness(newdata$bEANEG, na.rm = TRUE)
+
+kurtosis(newdata$bEANEG, na.rm = TRUE)
+
+hist(newdata$bEANEG)
+
+skewness(newdata$logbEANEG, na.rm = TRUE)
+
+kurtosis(newdata$logbEANEG, na.rm = TRUE)
+
+hist(newdata$logbEANEG)
+
+# CONSUMPTION CONTEXTS
+
+# SOCIAL FACILITATION. Time 2:
+skewness(newdata$bfacilitsoc, na.rm = TRUE)
+
+kurtosis(newdata$bfacilitsoc, na.rm = TRUE)
+
+hist(newdata$bfacilitsoc)
+
+skewness(newdata$logbfacilitsoc, na.rm = TRUE)
+
+kurtosis(newdata$logbfacilitsoc, na.rm = TRUE)
+
+hist(newdata$logbfacilitsoc)
+
+# PEER GROUP ACCEPTANCE. Time 2:
+skewness(newdata$baceptpares, na.rm = TRUE)
+
+kurtosis(newdata$baceptpares, na.rm = TRUE)
+
+hist(newdata$baceptpares)
+
+skewness(newdata$logbaceptpares, na.rm = TRUE)
+
+kurtosis(newdata$logbaceptpares, na.rm = TRUE)
+
+hist(newdata$logbaceptpares)
+
+# PARENTAL CONTROL. Time 2:
+skewness(newdata$bctrolparent, na.rm = TRUE)
+
+kurtosis(newdata$bctrolparent, na.rm = TRUE)
+
+hist(newdata$bctrolparent)
+
+skewness(newdata$logbctrolparent, na.rm = TRUE)
+
+kurtosis(newdata$logbctrolparent, na.rm = TRUE)
+
+hist(newdata$logbctrolparent)
+
+# STRESS CONTROL. Time 2:
+skewness(newdata$bctrolestres, na.rm = TRUE)
+
+kurtosis(newdata$bctrolestres, na.rm = TRUE)
+
+hist(newdata$bctrolestres)
+
+skewness(newdata$logbctrolestres, na.rm = TRUE)
+
+kurtosis(newdata$logbctrolestres, na.rm = TRUE)
+
+hist(newdata$logbctrolestres)
+```
+
+
+
+
+#### To assess  multicollinearity
+
+To check for multicollinearity, we used the VIF (Variance Inflation Factor) values. We adopted the following criteria (Field et al., 2012):
+
+
+If VIF values are less than 10 then that indicates there probably isn't cause for concern.
+If the average of VIF values is not substantially greater than 1, then that also indicates that there's no cause for concern.
+Tolerance below 0.1 and below 0.2 indicates a serious and a potential problem.
+
+
+*Reference:* Field, A., Miles, J., & Field, Z. (2012). Discovering statistics using R. London: SAGE.
+
+
+For assessing the assumption of no multicollinearity we used the vif() function, for the initial model:
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(car)
+```
+
+
+*WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES (OUTCOME)*
+
+*MODEL INCLUDING SCORES (log transformed) OF EA AND CC DURING THE FIRST MEASUREMENT*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+fitlogconsA<-lm(logaALCSEM ~ sexo + aedad + aedadinicioalc + logaEAPOS + logaEANEG + logafacilitsoc + logaaceptpares + logactrolparent + logactrolestres, data = newdata)
+```
+
+
+*The VIF*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+vif(fitlogconsA)
+```
+
+
+*The mean VIF*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+mean(vif(fitlogconsA))
+```
+
+
+*The tolerance*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+1/vif(fitlogconsA)
+```
+
+
+*WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES (OUTCOME)*
+
+
+*MODEL INCLUDING SCORES (log transformed) OF EA AND CC DURING THE SECOND MEASUREMENT*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+fitlogconsB<-lm(logbALCSEM ~ sexo + aedad + aedadinicioalc + logbEAPOS + logbEANEG + logbfacilitsoc + logbaceptpares + logbctrolparent + logbctrolestres, data = newdata)
+```
+
+
+*The VIF*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+vif(fitlogconsB)
+```
+
+
+*The mean VIF*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+mean(vif(fitlogconsB))
+```
+
+
+*The tolerance*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+1/vif(fitlogconsB)
+```
+
+
+
+Load the dataset (LONGITUDINAL)
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# dataset<-read.table("clipboard",header=TRUE, encoding = "Latin 1", dec=",", sep="\t") # LONGITUDINAL
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+table(dataset$sex) # 210 women, 90 men
+```
+
+
+*HEAVY DRINKERS- LONGITUDINAL*
+
+
+*WOMEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+dataset[dataset$aconsumosem>7 & dataset$sexo=="mujer",] # to select heavy drinkers that are only women. CDC criterium for heavy drinkers in women: consuming 8 drinks or more per week
+
+longwomheavy<-dataset[dataset$aconsumosem>7 & dataset$sexo=="mujer",] 
+
+summary(longwomheavy) 
+```
+
+
+*MEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+dataset[dataset$aconsumosem>14 & dataset$sexo=="varon",] # to select heavy drinkers that are only men. CDC criterium for heavy drinkers in men: consuming 15 drinks or more per week
+
+longmenheavy<-dataset[dataset$aconsumosem>14 & dataset$sexo=="varon",] 
+
+summary(longmenheavy) 
+```
+
+
+*NO HEAVY DRINKERS- LONGITUDINAL*
+
+
+*WOMEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+dataset[dataset$aconsumosem<8 & dataset$sexo=="mujer",] # to select NO heavy drinkers that are only women. CDC criterium for NO heavy drinkers in women: consuming LESS THAN 8 drinks per week
+
+longwomNOheavy<-dataset[dataset$aconsumosem<8 & dataset$sexo=="mujer",] 
+
+summary(longwomNOheavy)
+```
+
+
+*MEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+dataset[dataset$aconsumosem<15 & dataset$sexo=="varon",] # to select NO heavy drinkers that are only men. CDC criterium for NO heavy drinkers in men: consuming LESS THAN 15 drinks per week
+
+longmenNOheavy<-dataset[dataset$aconsumosem<15 & dataset$sexo=="varon",] 
+
+summary(longmenNOheavy)
+```
+
+
+ 
+
+*Cases with missing data (NAs) in the follow-up:*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+zNA<-dataset[!complete.cases(dataset$bconsumosem), ] # both sexes with NAs in the variable weekly alcohol consumption: n = 181
+zwomNA<-dataset[!complete.cases(dataset$bconsumosem) & dataset$sexo == "mujer", ] # women with NAs in the variable weekly alcohol consumption: n = 116
+zmenNA<-dataset[!complete.cases(dataset$bconsumosem) & dataset$sexo == "varon", ] # men with NAs in the variable weekly alcohol consumption: n = 65
+```
+
+
+*Cases without missing data (NAs) in the follow-up*
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+zCOMPL<-dataset[complete.cases(dataset$bconsumosem), ] # both sexes without NAs in the variable weekly alcohol consumption: n = 119
+zwomCOMPL<-dataset[complete.cases(dataset$bconsumosem) & dataset$sexo == "mujer", ] # women without NAs in the variable weekly alcohol consumption: n = 94
+zmenCOMPL<-dataset[complete.cases(dataset$bconsumosem) & dataset$sexo == "varon", ] # men without NAs in the variable weekly alcohol consumption: n = 25
+```
+
+
+*Mean age of participants without missing data (NAs) in the follow-up*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+mean(zCOMPL$aedad) # both sexes
+
+sd(zCOMPL$aedad) # both sexes
+
+
+mean(zwomCOMPL$aedad) # women
+
+sd(zwomCOMPL$aedad) # women
+
+
+mean(zmenCOMPL$aedad) # men
+
+sd(zmenCOMPL$aedad) # men
+```
+
+
+*Mean age of participants with missing data (NAs) in the follow-up*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+mean(zNA$aedad) # both sexes
+
+sd(zNA$aedad) # both sexes
+ 
+
+mean(zwomNA$aedad) # women
+
+sd(zwomNA$aedad) # women
+
+
+mean(zmenNA$aedad) # men
+
+sd(zmenNA$aedad) # men
+```
+
+
+*Mean weekly alcohol consumption (during the first measurement) among participants without missing data (NAs) in the follow-up*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+mean(zCOMPL$aconsumosem) # both sexes
+
+sd(zCOMPL$aconsumosem) # both sexes
+
+
+mean(zwomCOMPL$aconsumosem) # women
+
+sd(zwomCOMPL$aconsumosem) # women
+
+
+mean(zmenCOMPL$aconsumosem) # men
+
+sd(zmenCOMPL$aconsumosem) # men
+```
+
+
+*Mean weekly alcohol consumption (during the first measurement) among participants with missing data (NAs) in the follow-up*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+mean(zNA$aconsumosem) # both sexes
+
+sd(zNA$aconsumosem) # both sexes
+
+
+mean(zwomNA$aconsumosem) # women
+
+sd(zwomNA$aconsumosem) # women
+
+
+mean(zmenNA$aconsumosem) # men
+
+sd(zmenNA$aconsumosem) # men
+```
+
+
+*Differences between means*
+
+
+*Age: without vs with missing values in both sexes*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t.test(x = zCOMPL$aedad, y = zNA$aedad, paired = FALSE, alternative = "two.sided", mu = 0, conf.level = 0.95)
+```
+
+
+*Age: without vs with missing values in women*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t.test(x = zwomCOMPL$aedad, y = zwomNA$aedad, paired = FALSE, alternative = "two.sided", mu = 0, conf.level = 0.95)
+```
+
+
+*Age: without vs with missing values in men*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t.test(x = zmenCOMPL$aedad, y = zmenNA$aedad, paired = FALSE, alternative = "two.sided", mu = 0, conf.level = 0.95)
+```
+
+
+*Weekly alcohol consumption: without vs with missing values in both sexes*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t.test(x = zCOMPL$aconsumosem, y = zNA$aconsumosem, paired = FALSE, alternative = "two.sided", mu = 0, conf.level = 0.95)
+```
+
+
+*Weekly alcohol consumption: without vs with missing values in women*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t.test(x = zwomCOMPL$aconsumosem, y = zwomNA$aconsumosem, paired = FALSE, alternative = "two.sided", mu = 0, conf.level = 0.95)
+```
+
+
+*Weekly alcohol consumption: without vs with missing values in men*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+t.test(x = zmenCOMPL$aconsumosem, y = zmenNA$aconsumosem, paired = FALSE, alternative = "two.sided", mu = 0, conf.level = 0.95)
+```
+

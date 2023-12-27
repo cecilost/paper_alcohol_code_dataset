@@ -1,0 +1,552 @@
+---
+title: "PaperAlcohol_CrossSectionalSample.R"
+author: "L. Cecilia López Steinmetz"
+date: "17/2/2023"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+# R Code for:
+
+
+# López Steinmetz LC, Leyes CA, Fong SB & Godoy JC. "Alcohol consumption, alcohol expectancies, and drinking contexts in young Argentinean college students before and during the COVID-19 pandemic: A one-year follow-up study"
+
+
+### ABBREVIATIONS 
+
+
+**Abbreviations:**
+EA = Alcohol Expectancy (Expectativas hacia el alcohol)
+CC = Consumption Contexts (Contextos de consumo de alcohol)
+
+
+### LOAD THE DATASETS: b) Cross-sectional
+
+
+#### b) Load the dataset: *CROSS-SECTIONAL sample*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+transv<-read.table("clipboard",header=TRUE, encoding = "Latin 1", dec=",", sep="\t") # CROSS-SECTIONAL
+```
+
+
+#### To explore the data
+
+
+#### b) *CROSS-SECTIONAL sample*
+
+
+*To order categories*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+transv$tsexo <- factor(transv$tsexo, levels=c("Wom", "Man")) 
+```
+
+
+*Check the type of the variables (CROSS-SECTIONAL) and transform them (when necessary)*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+str(transv)
+
+transv$tunidadesalc<-as.numeric(transv$tunidadesalc)
+transv$tALCSEM<-as.numeric(transv$tALCSEM)
+
+str(transv)
+```
+
+
+### METHODS SECTION 
+
+
+#### SKEWNESS, KURTOSIS, & MULTICOLLINEARITY
+
+
+*To test Skewness and Kurtosis: See codes for supplementary files (at the end of these scripts)*
+
+
+*To test for multicollinearity: See codes supplementary files (at the end of these scripts)*
+
+
+#### DESCRIPTION OF THE SAMPLE
+
+
+##### CROSS-SECTIONAL
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# Sex
+table(transv$tsexo)
+
+prop.table(table(transv$tsexo))*100
+
+
+# Age
+mean(transv$tedad) # at the first measurement
+
+sd(transv$tedad) # at the first measurement
+
+
+# Age of onset of alcohol consumption
+mean(transv$tedadinicioalc)
+
+sd(transv$tedadinicioalc)
+
+
+# Weekly alcohol consumption (Units of alcohol)
+mean(transv$tALCSEM)
+
+sd(transv$tALCSEM)
+```
+
+
+##### CROSS-SECTIONAL 
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+#Load the dataset (CROSS-SECTIONAL)
+
+# transv<-read.table("clipboard",header=TRUE, encoding = "Latin 1", dec=",", sep="\t") # CROSS-SECTIONAL
+
+# transv$tsexo <- factor(transv$tsexo, levels=c("Wom", "Man")) # to order categories
+```
+
+
+### METHODS SECTION 
+
+
+##### CROSS-SECTIONAL 
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+transvlog <- transv
+```
+
+
+##### LOG TRANSFORMATIONS
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES
+transvlog$logtALCSEM <- log(transvlog$tALCSEM + 1)
+
+# ALCOHOL EXPECTANCIES
+
+# POSITIVE EA:
+transvlog$logtEAPOS <- log(transvlog$tEAPOS + 1)
+
+# NEGATIVE EA:
+transvlog$logtEANEG <- log(transvlog$tEANEG + 1)
+
+# CONSUMPTION CONTEXTS
+
+# SOCIAL FACILITATION:
+transvlog$logtfacilitsoc <- log(transvlog$tfacilitsoc + 1)
+
+# PEER GROUP ACCEPTANCE:
+transvlog$logtaceptpares <- log(transvlog$taceptpares + 1)
+
+# PARENTAL CONTROL:
+transvlog$logtctrolparent <- log(transvlog$tctrolparent + 1)
+
+# STRESS CONTROL:
+transvlog$logtctrolestres <- log(transvlog$tctrolestres + 1) 
+```
+
+
+*Preparing the data: based on LOG TRANSFORMED VALUES*
+
+
+*To see the NAs*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(mice)
+datatransv<-subset(transvlog,select=c(tsexo, tedad, tedadinicioalc, logtALCSEM, logtEAPOS, logtEANEG, logtfacilitsoc, logtaceptpares, logtctrolparent, logtctrolestres))
+md.pattern(datatransv, rotate.names = TRUE)
+md.pairs(datatransv) 
+```
+
+
+*We used the pmm (predictive mean matching) method for imputation*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# Libraries
+# library(mice)
+library(VIM)
+
+# Missing data
+p <- function(x) {sum(is.na(x))/length(x)*100}
+apply(datatransv, 2, p) 
+```
+
+
+*Impute*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+set.seed(123)
+```
+
+
+*We run the mice code with 0 iterations*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+imptr <- mice(datatransv, maxit=0, seed = 123)
+```
+
+
+*Extract predictorMatrix and methods of imputation*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+predM <- imptr$predictorMatrix
+meth <- imptr$method
+```
+
+
+*To view the first few rows of the predictor matrix*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+head(predM)
+```
+
+
+*See the methods of imputations*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+meth
+
+imputeT <- mice(datatransv, m = 10, maxit = 5, predictorMatrix = predM, method = meth, seed = 123)
+
+print(imputeT) 
+imputeT$imp$logtEAPOS
+imputeT$imp$logtEANEG 
+imputeT$imp$logtfacilitsoc 
+imputeT$imp$logtaceptpares  
+imputeT$imp$logtctrolparent  
+imputeT$imp$logtctrolestres 
+```
+
+
+*Distribution of oberserved/imputed values*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+xyplot(imputeT, logtEAPOS ~ logtALCSEM | .imp, pch = 20, cex=1.4)
+xyplot(imputeT, logtEANEG ~ logtALCSEM | .imp, pch = 20, cex=1.4)
+xyplot(imputeT, logtfacilitsoc ~ logtALCSEM | .imp, pch = 20, cex=1.4)
+xyplot(imputeT, logtaceptpares ~ logtALCSEM | .imp, pch = 20, cex=1.4)
+xyplot(imputeT, logtctrolparent ~ logtALCSEM | .imp, pch = 20, cex=1.4)
+xyplot(imputeT, logtctrolestres ~ logtALCSEM | .imp, pch = 20, cex=1.4)
+```
+
+
+*Complete the dataset*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+newtransv <- complete(imputeT, 10) # We choosed the first imputation to complete the dataset
+
+detach("package:mice", unload = TRUE)
+detach("package:VIM", unload = TRUE)
+```
+
+
+*OUTCOME, EA AND CC MEASURED DURING QUARANTINE DUE TO THE COVID-19 PANDEMIC)*
+*(CROSS-SECTIONAL SAMPLE)*
+
+
+*To select the order in which the predictors will be included into the model*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(leaps)
+
+bestcrosssect<-regsubsets(logtALCSEM ~ tsexo + tedad + tedadinicioalc + logtEAPOS + logtEANEG + logtfacilitsoc + logtaceptpares + logtctrolparent + logtctrolestres, data = newtransv, nvmax = 11, method = "exhaustive")
+
+summary(bestcrosssect, all.best = TRUE)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+plot(bestcrosssect, scale = "r2", main = "Best R^2") # R2 = 0.46
+plot(bestcrosssect, scale = "adjr2", main = "Best Adjusted R^2") # adj R2 = 0.44
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# Model:
+fullT<-lm(logtALCSEM ~ logtctrolestres + logtctrolparent + logtEAPOS + tedad + tsexo + logtfacilitsoc + logtEANEG + tedadinicioalc + logtaceptpares, data = newtransv)
+
+summary(fullT)
+```
+
+
+*95% Confidence interval of best-fitted model*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+confint(fullT, level = 0.95)
+```
+
+
+*ERROR RATE of best-fitted model*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+sigma(fullT)/mean(newtransv$logtALCSEM)
+# In our multiple regression, the Residual Standard Error (RSE) or sigma is 0.6705 corresponding to 35.57% error rate.
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+par(mfrow=c(2,2))
+# Figure 
+plot(fullT)
+par(mfrow=c(1,1))
+```
+
+
+*Effect sizes*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+effectsize::cohens_f(fullT, ci = 0.95)
+```
+
+
+
+
+### SUPPLEMENTARY MATERIALS
+
+
+#### To test Skewness and Kurtosis
+
+#### & log transformation
+
+
+*Testing Skewness and Kurtosis*
+
+
+*Criteria:* range of acceptable values -1 to +1 for Skewness and -3 to +3 for Kurtosis (Brown, 2006) or near to.
+
+
+*Reference:* Brown, T. A. (2006). Confirmatory factor analysis for applied research. New York: Guilford Press.
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(moments)
+```
+
+
+We have tested skewness and kurtosis in the original data (from which included NAs).
+Then, we have tested skewness and kurtosis transforming the data by using the log transformation (natural logarithm).
+
+
+#### CROSS-SECTIONAL SAMPLE #### 
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES
+skewness(transv$tALCSEM)
+
+kurtosis(transv$tALCSEM)
+
+hist(transv$tALCSEM)
+
+skewness(transvlog$logtALCSEM)
+
+kurtosis(transvlog$logtALCSEM)
+
+hist(transvlog$logtALCSEM)
+
+# ALCOHOL EXPECTANCIES
+
+# POSITIVE EA:
+skewness(transv$tEAPOS, na.rm = TRUE)
+
+kurtosis(transv$tEAPOS, na.rm = TRUE)
+
+hist(transv$tEAPOS)
+
+skewness(transvlog$logtEAPOS, na.rm = TRUE)
+
+kurtosis(transvlog$logtEAPOS, na.rm = TRUE)
+
+hist(transvlog$logtEAPOS)
+
+# NEGATIVE EA:
+skewness(transv$tEANEG, na.rm = TRUE)
+
+kurtosis(transv$tEANEG, na.rm = TRUE)
+
+hist(transv$tEANEG)
+
+skewness(transvlog$logtEANEG, na.rm = TRUE)
+
+kurtosis(transvlog$logtEANEG, na.rm = TRUE)
+
+hist(transvlog$logtEANEG)
+
+# CONSUMPTION CONTEXTS
+
+# SOCIAL FACILITATION:
+skewness(transv$tfacilitsoc, na.rm = TRUE)
+
+kurtosis(transv$tfacilitsoc, na.rm = TRUE)
+
+hist(transv$tfacilitsoc)
+
+skewness(transvlog$logtfacilitsoc, na.rm = TRUE)
+
+kurtosis(transvlog$logtfacilitsoc, na.rm = TRUE)
+
+hist(transvlog$logtfacilitsoc)
+
+# PEER GROUP ACCEPTANCE:
+skewness(transv$taceptpares, na.rm = TRUE)
+
+kurtosis(transv$taceptpares, na.rm = TRUE)
+
+hist(transv$taceptpares)
+
+skewness(transvlog$logtaceptpares, na.rm = TRUE)
+
+kurtosis(transvlog$logtaceptpares, na.rm = TRUE)
+
+hist(transvlog$logtaceptpares)
+
+# PARENTAL CONTROL:
+skewness(transv$tctrolparent, na.rm = TRUE)
+
+kurtosis(transv$tctrolparent, na.rm = TRUE)
+
+hist(transv$tctrolparent)
+
+skewness(transvlog$logtctrolparent, na.rm = TRUE)
+
+kurtosis(transvlog$logtctrolparent, na.rm = TRUE)
+
+hist(transvlog$logtctrolparent)
+
+# STRESS CONTROL:
+skewness(transv$tctrolestres, na.rm = TRUE)
+
+kurtosis(transv$tctrolestres, na.rm = TRUE)
+
+hist(transv$tctrolestres)
+
+skewness(transvlog$logtctrolestres, na.rm = TRUE)
+
+kurtosis(transvlog$logtctrolestres, na.rm = TRUE)
+
+hist(transvlog$logtctrolestres)
+```
+
+
+
+#### To assess  multicollinearity
+
+To check for multicollinearity, we used the VIF (Variance Inflation Factor) values. We adopted the following criteria (Field et al., 2012):
+
+
+If VIF values are less than 10 then that indicates there probably isn't cause for concern.
+If the average of VIF values is not substantially greater than 1, then that also indicates that there's no cause for concern.
+Tolerance below 0.1 and below 0.2 indicates a serious and a potential problem.
+
+
+*Reference:* Field, A., Miles, J., & Field, Z. (2012). Discovering statistics using R. London: SAGE.
+
+
+For assessing the assumption of no multicollinearity we used the vif() function, for the initial model:
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+library(car)
+```
+
+
+*WEEKLY CONSUMPTION OF ALCOHOLIC BEVERAGES (OUTCOME)*
+
+
+*MODEL INCLUDING SCORES (log transformed) OF EA AND CC IN THE CROSS-SECTIONAL SAMPLE*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+fitlogconsT<-lm(logtALCSEM ~ tsexo + tedad + tedadinicioalc + logtEAPOS + logtEANEG + logtfacilitsoc + logtaceptpares + logtctrolparent + logtctrolestres, data = transvlog)
+```
+
+
+*The VIF*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+vif(fitlogconsT)
+```
+
+
+*The mean VIF*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+mean(vif(fitlogconsT))
+```
+
+
+*The tolerance*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+1/vif(fitlogconsT)
+```
+
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+detach("package:car", unload = TRUE)
+```
+
+
+
+Load the dataset (CROSS-SECTIONAL)
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+# transv<-read.table("clipboard",header=TRUE, encoding = "Latin 1", dec=",", sep="\t") # CROSS-SECTIONAL
+```
+
+
+*HEAVY DRINKERS- CROSS-SECTIONAL*
+
+
+*WOMEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+table(transv$tsexo)
+
+transv[transv$tconsumosem>7 & transv$tsexo=="Wom",] # to select heavy drinkers that are only women. CDC criterium for heavy drinkers in women: consuming 8 drinks or more per week
+
+transvwomheavy<-transv[transv$tconsumosem>7 & transv$tsexo=="Wom",] 
+
+summary(transvwomheavy) 
+```
+
+
+*MEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+transv[transv$tconsumosem>14 & transv$tsexo=="Man",] # to select heavy drinkers that are only men. CDC criterium for heavy drinkers in men: consuming 15 drinks or more per week
+
+transvmenheavy<-transv[transv$tconsumosem>14 & transv$tsexo=="Man",] 
+
+summary(transvmenheavy) 
+```
+
+
+*NO HEAVY DRINKERS- CROSS-SECTIONAL*
+
+
+*WOMEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+transv[transv$tconsumosem<8 & transv$tsexo=="Wom",] # to select NO heavy drinkers that are only women. CDC criterium for NO heavy drinkers in women: consuming LESS THAN 8 drinks per week
+
+transvwomNOheavy<-transv[transv$tconsumosem<8 & transv$tsexo=="Wom",] 
+
+summary(transvwomNOheavy) 
+```
+
+
+*MEN*
+
+```{r eval=TRUE, echo=TRUE, warning=TRUE, message=TRUE, error=TRUE}
+transv[transv$tconsumosem<15 & transv$tsexo=="Man",] # to select NO heavy drinkers that are only men. CDC criterium for NO heavy drinkers in men: consuming LESS THAN 15 drinks per week
+
+transvmenNOheavy<-transv[transv$tconsumosem<15 & transv$tsexo=="Man",] 
+
+summary(transvmenNOheavy)
+```
+
+
